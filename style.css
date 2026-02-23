@@ -1,0 +1,453 @@
+/* Переменные */
+:root {
+    --primary-color: #3f3f3f;
+    --secondary-color: #c3c3c376;
+    --error-color: #e74c3c;
+    --text-color: #505050;
+    --bg-color: #f5f7fa;
+    --card-bg: rgba(255, 255, 255, 0.2);
+    --border-color: #e0e0e0;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.15);
+    --font-family: 'Roboto', sans-serif;
+}
+
+/* Сброс и базовые стили */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-family);
+}
+
+body {
+    font-family: var(--font-family);
+    background-image: url('image.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    color: var(--text-color);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+button,
+input,
+textarea,
+select {
+    font-family: var(--font-family);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Общий эффект размытия для всех карточек и контейнеров */
+.header,
+.loader,
+.weather-container,
+.weather-day,
+.city-search-form,
+.dropdown,
+.error-message {
+    backdrop-filter: blur(10px);
+}
+
+/* Заголовок */
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 15px 25px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: none;
+}
+
+.header__title {
+    font-size: 2rem;
+    font-family: var(--font-family);
+    color: var(--primary-color);
+    font-weight: 100;
+    margin: 0;
+}
+
+/* Секции */
+.section-title {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+/* Лоадер */
+.loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 25px;
+    min-height: 200px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.loader__spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loader__text {
+    margin-top: 15px;
+    color: var(--text-color);
+    font-size: 1rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Контейнер с кнопками городов */
+.cities-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 30px;
+    padding: 15px;
+    background: transparent;
+    border-radius: 12px;
+    align-items: flex-start;
+}
+
+.cities-buttons .city-search-form {
+    flex-basis: 100%;
+}
+
+.city-button {
+    padding: 12px 24px;
+    background: var(--card-bg);
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-family);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+}
+
+.city-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.city-button--active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.city-button--add {
+    background: var(--secondary-color);
+    color: white;
+}
+
+/* Контейнер погоды */
+.weather-container {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 0;
+    margin-bottom: 30px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.weather-day {
+    padding: 25px;
+    min-height: 200px;
+}
+
+.weather-day:first-child {
+    padding-top: 25px;
+}
+
+.weather-day:last-child {
+    padding-bottom: 25px;
+}
+
+.weather-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 0;
+    opacity: 0.5;
+}
+
+/* Стили для содержимого карточек погоды */
+.weather-day__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.weather-day__city {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.weather-day__date {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.weather-day__temp {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 15px 0;
+}
+
+.weather-day__description {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 15px;
+    text-transform: capitalize;
+}
+
+.weather-day__details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.weather-day__detail-item {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Форма поиска внутри контейнера с кнопками */
+.city-search-form {
+    width: 100%;
+    margin-top: 15px;
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.search-form {
+    position: relative;
+}
+
+.search-form__wrapper {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.search-form__input {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.search-form__input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.search-form__input.error {
+    border-color: var(--error-color);
+}
+
+.search-form__button {
+    padding: 12px 25px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-family);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.search-form__button:hover {
+    background: #357abd;
+}
+
+.search-form__button:active {
+    transform: scale(0.98);
+}
+
+/* Выпадающий список */
+.dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: var(--shadow);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: -2px;
+}
+
+.dropdown__list {
+    list-style: none;
+}
+
+.dropdown__item {
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.dropdown__item:last-child {
+    border-bottom: none;
+}
+
+.dropdown__item:hover {
+    background: rgba(245, 247, 250, 0.7);
+}
+
+.dropdown__item.active {
+    background: #e3f2fd;
+}
+
+/* Сообщения об ошибках */
+.error-message {
+    background: rgba(255, 235, 238, 0.9);
+    color: #c62828;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border-left: 4px solid var(--error-color);
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+
+
+/* Кнопка обновления */
+.refresh-section {
+    text-align: center;
+    margin-top: 40px;
+    margin-bottom: 20px;
+}
+
+.refresh-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 30px;
+    background: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-family);
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.refresh-button:hover {
+    background: #45b869;
+    transform: translateY(-2px);
+}
+
+.refresh-button:active {
+    transform: translateY(0);
+}
+
+.refresh-button__icon {
+    font-size: 1.3rem;
+    transition: transform 0.3s ease;
+}
+
+.refresh-button:hover .refresh-button__icon {
+    transform: rotate(180deg);
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    .header__title {
+        font-size: 2rem;
+    }
+
+    .cities-buttons {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .city-button {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
+
+    .search-form__wrapper {
+        flex-direction: column;
+    }
+
+    .search-form__button {
+        width: 100%;
+    }
+
+    .weather-day {
+        padding: 20px;
+    }
+
+    .weather-day__temp {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .header__title {
+        font-size: 1.5rem;
+    }
+
+    .weather-day__temp {
+        font-size: 2rem;
+    }
+
+    .refresh-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .cities-buttons {
+        flex-direction: column;
+    }
+
+    .city-button {
+        width: 100%;
+    }
+}
+
