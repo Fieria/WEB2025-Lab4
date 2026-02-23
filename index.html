@@ -18,7 +18,6 @@
 
         <!-- Контейнер с кнопками городов -->
         <div class="cities-buttons" id="citiesButtons">
-            <button class="city-button city-button--add" id="addCityButton">Добавить город</button>
             <!-- Кнопки городов будут добавлены динамически через JS -->
             
             <!-- Форма поиска (скрыта по умолчанию, показывается при клике на кнопку) -->
@@ -81,10 +80,13 @@
         <!-- Блок ошибки -->
         <div class="error-message" id="currentError" style="display: none;"></div>
 
-        <!-- Кнопка обновления -->
+        <!-- Кнопки действий -->
         <div class="refresh-section">
-            <button class="refresh-button" id="refreshButton">
-                <span class="refresh-button__icon">↻</span>
+            <button class="action-button" id="addCityButton">
+                Добавить город
+            </button>
+            <button class="action-button" id="refreshButton">
+                <span class="action-button__icon">↻</span>
                 Обновить данные
             </button>
         </div>
