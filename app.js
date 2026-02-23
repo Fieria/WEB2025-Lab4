@@ -19,6 +19,7 @@ const citiesList = document.getElementById('citiesList');
 const refreshButton = document.getElementById('refreshButton');
 const addCityButton = document.getElementById('addCityButton');
 const citiesButtons = document.getElementById('citiesButtons');
+const okButton = document.getElementById('okButton');
 
 // Состояние приложения
 let currentLocationWeather = null;
@@ -498,19 +499,24 @@ function setupEventListeners() {
     
     // Обработчик формы поиска
     if (searchForm) {
-        searchForm.addEventListener('submit', handleFormSubmit);
+        searchForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+        });
+    }
+    
+    // Обработчик кнопки OK
+    if (okButton) {
+        okButton.addEventListener('click', (event) => {
+            event.preventDefault();
+            handleFormSubmit(event);
+        });
     }
     
     // Обработчик ввода в поле поиска
     if (cityInput) {
         cityInput.addEventListener('input', handleCityInput);
-        // Обработчик нажатия Enter
+        // Закрытие по Escape
         cityInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                handleFormSubmit(event);
-            }
-            // Закрытие по Escape
             if (event.key === 'Escape') {
                 hideCitySearchForm();
             }
