@@ -6,10 +6,10 @@
     --text-color: #505050;
     --bg-color: #f5f7fa;
     --card-bg: rgba(255, 255, 255, 0.2);
-    --border-color: #e0e0e0;
+    --border-color: #9a9a9a;
     --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.15);
-    --font-family: 'Roboto', sans-serif;
+    --font-family: 'Inter', sans-serif;
 }
 
 /* Сброс и базовые стили */
@@ -32,10 +32,11 @@ body {
     min-height: 100vh;
 }
 
-button,
-input,
-textarea,
-select {
+/* Применение шрифта ко всем текстовым элементам */
+h1, h2, h3, h4, h5, h6,
+p, span, div, a, li, ul, ol,
+label, td, th, strong, em, b, i,
+button, input, textarea, select {
     font-family: var(--font-family);
 }
 
@@ -50,9 +51,9 @@ select {
 .loader,
 .weather-container,
 .weather-day,
-.city-search-form,
 .dropdown,
-.error-message {
+.error-message,
+.modal-content {
     backdrop-filter: blur(10px);
 }
 
@@ -68,16 +69,13 @@ select {
 }
 
 .header__title {
-    font-size: 2rem;
     font-family: var(--font-family);
-    color: var(--primary-color);
-    font-weight: 100;
-    margin: 0;
 }
 
 /* Секции */
 .section-title {
     font-size: 1.5rem;
+    font-family: var(--font-family);
     margin-bottom: 20px;
     color: var(--text-color);
     font-weight: 600;
@@ -107,6 +105,7 @@ select {
 
 .loader__text {
     margin-top: 15px;
+    font-family: var(--font-family);
     color: var(--text-color);
     font-size: 1rem;
 }
@@ -183,9 +182,13 @@ select {
 
 .weather-divider {
     height: 1px;
+    width: 100%;
     background: var(--border-color);
     margin: 0;
+    padding: 0;
+    border: none;
     opacity: 0.5;
+    flex-shrink: 0;
 }
 
 /* Стили для содержимого карточек погоды */
@@ -198,17 +201,20 @@ select {
 
 .weather-day__city {
     font-size: 1.3rem;
+    font-family: var(--font-family);
     font-weight: 600;
     color: var(--text-color);
 }
 
 .weather-day__date {
     font-size: 0.9rem;
+    font-family: var(--font-family);
     color: #666;
 }
 
 .weather-day__temp {
     font-size: 3rem;
+    font-family: var(--font-family);
     font-weight: 700;
     color: var(--primary-color);
     margin: 15px 0;
@@ -216,6 +222,7 @@ select {
 
 .weather-day__description {
     font-size: 1.1rem;
+    font-family: var(--font-family);
     color: #666;
     margin-bottom: 15px;
     text-transform: capitalize;
@@ -226,6 +233,7 @@ select {
     flex-direction: column;
     gap: 8px;
     font-size: 0.9rem;
+    font-family: var(--font-family);
     color: #666;
 }
 
@@ -234,14 +242,64 @@ select {
     justify-content: space-between;
 }
 
-/* Форма поиска внутри контейнера с кнопками */
-.city-search-form {
+/* Модальное окно */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    margin-top: 15px;
-    padding: 20px;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    position: relative;
     background: var(--card-bg);
     border-radius: 12px;
+    padding: 30px;
     box-shadow: var(--shadow);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    backdrop-filter: blur(10px);
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-color);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.3s ease;
+}
+
+.modal-close:hover {
+    color: var(--error-color);
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    font-family: var(--font-family);
+    color: white;
+    margin-bottom: 20px;
+    margin-top: 0;
 }
 
 .search-form {
@@ -259,8 +317,15 @@ select {
     padding: 12px 15px;
     border: 2px solid var(--border-color);
     border-radius: 8px;
+    font-family: var(--font-family);
     font-size: 1rem;
+    background: #808080;
+    color: white;
     transition: border-color 0.3s ease;
+}
+
+.search-form__input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .search-form__input:focus {
@@ -316,6 +381,7 @@ select {
 
 .dropdown__item {
     padding: 12px 15px;
+    font-family: var(--font-family);
     cursor: pointer;
     transition: background 0.2s ease;
     border-bottom: 1px solid var(--border-color);
@@ -341,6 +407,7 @@ select {
     border-radius: 8px;
     border-left: 4px solid var(--error-color);
     margin-top: 10px;
+    font-family: var(--font-family);
     font-size: 0.9rem;
 }
 
