@@ -1,4 +1,5 @@
 # Приложение для прогноза погоды
+Видео-презентация https://drive.google.com/file/d/193VUUOcVBxX_XkNkg3QKYquPzjhVjAky/view?usp=sharing
 Деплой https://fieria.github.io/WEB2025-Lab4/
 
 ## Задача
