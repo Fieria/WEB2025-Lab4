@@ -20,6 +20,10 @@ const refreshButton = document.getElementById('refreshButton');
 const addCityButton = document.getElementById('addCityButton');
 const citiesButtons = document.getElementById('citiesButtons');
 const okButton = document.getElementById('okButton');
+const weatherContainer = document.getElementById('weatherContainer');
+const weatherToday = document.getElementById('weatherToday');
+const weatherTomorrow = document.getElementById('weatherTomorrow');
+const weatherDayAfter = document.getElementById('weatherDayAfter');
 
 // Состояние приложения
 let currentLocationWeather = null;
@@ -27,6 +31,7 @@ let additionalCitiesList = [];
 let geolocationDenied = false;
 let searchTimeout = null;
 let selectedCity = null;
+let currentSelectedCity = null; // Текущий выбранный город для отображения погоды
 
 // ============================================
 // ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ
@@ -67,10 +72,34 @@ function requestGeolocation() {
  * Обработка успешного получения геолокации
  * @param {GeolocationPosition} position - Позиция пользователя
  */
-function handleGeolocationSuccess(position) {
+async function handleGeolocationSuccess(position) {
     const { latitude, longitude } = position.coords;
-    // TODO: Вызов fetchWeather для текущего местоположения
-    console.log('Геолокация получена:', latitude, longitude);
+    
+    currentSelectedCity = { name: 'Текущее местоположение', lat: latitude, lon: longitude };
+    
+    // Показываем лоадер
+    showLoader(currentLoader);
+    
+    // Скрываем контейнер погоды
+    if (weatherContainer) {
+        weatherContainer.style.display = 'none';
+    }
+    
+    // Скрываем ошибку
+    if (currentError) {
+        currentError.style.display = 'none';
+    }
+    
+    try {
+        // Загружаем прогноз для текущего местоположения
+        const forecasts = await fetchWeatherForecast(latitude, longitude, 'Текущее местоположение');
+        renderWeatherCards(forecasts, 'Текущее местоположение');
+        currentLocationWeather = forecasts;
+    } catch (error) {
+        console.error('Ошибка при загрузке погоды для текущего местоположения:', error);
+        hideLoader(currentLoader);
+        showGeolocationError('Не удалось загрузить прогноз погоды для вашего местоположения.');
+    }
 }
 
 /**
@@ -165,9 +194,110 @@ async function fetchWeather(lat, lon, cityName = null) {
  * @returns {Promise<Array>} - Массив прогнозов на 3 дня
  */
 async function fetchWeatherForecast(lat, lon, cityName = null) {
-    // TODO: Реализация запроса прогноза на 3 дня
-    console.log('fetchWeatherForecast вызвана:', { lat, lon, cityName });
-    return [];
+    try {
+        // Используем Open-Meteo API (бесплатный, не требует ключа)
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode,windspeed_10m_max&timezone=auto&forecast_days=3`;
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.daily || !data.daily.time) {
+            throw new Error('Неверный формат данных от API');
+        }
+
+        // Формируем массив прогнозов на 3 дня
+        const forecasts = [];
+        for (let i = 0; i < 3; i++) {
+            const date = new Date(data.daily.time[i]);
+            const weatherCode = data.daily.weathercode[i];
+            
+            forecasts.push({
+                date: date,
+                dateString: formatDate(date),
+                tempMax: Math.round(data.daily.temperature_2m_max[i]),
+                tempMin: Math.round(data.daily.temperature_2m_min[i]),
+                weatherCode: weatherCode,
+                description: getWeatherDescription(weatherCode),
+                windSpeed: Math.round(data.daily.windspeed_10m_max[i] || 0),
+                cityName: cityName || 'Неизвестный город'
+            });
+        }
+
+        return forecasts;
+    } catch (error) {
+        console.error('Ошибка при получении прогноза погоды:', error);
+        throw error;
+    }
+}
+
+/**
+ * Получение описания погоды по коду
+ * @param {number} code - Код погоды WMO
+ * @returns {string} - Описание погоды
+ */
+function getWeatherDescription(code) {
+    const weatherCodes = {
+        0: 'Ясно',
+        1: 'Преимущественно ясно',
+        2: 'Переменная облачность',
+        3: 'Пасмурно',
+        45: 'Туман',
+        48: 'Изморозь',
+        51: 'Легкая морось',
+        53: 'Умеренная морось',
+        55: 'Сильная морось',
+        56: 'Легкая ледяная морось',
+        57: 'Сильная ледяная морось',
+        61: 'Небольшой дождь',
+        63: 'Умеренный дождь',
+        65: 'Сильный дождь',
+        66: 'Легкий ледяной дождь',
+        67: 'Сильный ледяной дождь',
+        71: 'Небольшой снег',
+        73: 'Умеренный снег',
+        75: 'Сильный снег',
+        77: 'Снежные зерна',
+        80: 'Небольшой ливень',
+        81: 'Умеренный ливень',
+        82: 'Сильный ливень',
+        85: 'Небольшой снегопад',
+        86: 'Сильный снегопад',
+        95: 'Гроза',
+        96: 'Гроза с градом',
+        99: 'Сильная гроза с градом'
+    };
+    return weatherCodes[code] || 'Неизвестно';
+}
+
+/**
+ * Форматирование даты
+ * @param {Date} date - Дата
+ * @returns {string} - Отформатированная дата
+ */
+function formatDate(date) {
+    const days = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+    const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    
+    const dayName = days[date.getDay()];
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    
+    if (date.toDateString() === new Date().toDateString()) {
+        return 'Сегодня';
+    }
+    
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    if (date.toDateString() === tomorrow.toDateString()) {
+        return 'Завтра';
+    }
+    
+    return `${dayName}, ${day} ${month}`;
 }
 
 // ============================================
@@ -178,13 +308,68 @@ async function fetchWeatherForecast(lat, lon, cityName = null) {
  * Отображение карточек погоды
  * @param {Array} forecasts - Массив прогнозов (сегодня + 2 дня)
  * @param {string} cityName - Название города
- * @param {HTMLElement} container - Контейнер для карточек
- * @param {boolean} isRemovable - Можно ли удалить карточку
  */
-function renderWeatherCards(forecasts, cityName, container, isRemovable = false) {
-    // TODO: Создание HTML-структуры карточек
-    // TODO: Отображение данных: температура, описание, детали
-    console.log('renderWeatherCards вызвана:', { forecasts, cityName, container, isRemovable });
+function renderWeatherCards(forecasts, cityName) {
+    if (!forecasts || forecasts.length !== 3) {
+        console.error('Неверный формат данных прогноза');
+        return;
+    }
+
+    if (!weatherToday || !weatherTomorrow || !weatherDayAfter) {
+        console.error('Элементы контейнера погоды не найдены');
+        return;
+    }
+
+    // Скрываем ошибку, если она была
+    if (currentError) {
+        currentError.style.display = 'none';
+    }
+
+    // Скрываем лоадер
+    hideLoader(currentLoader);
+
+    // Показываем контейнер погоды
+    if (weatherContainer) {
+        weatherContainer.style.display = 'block';
+    }
+
+    // Отображаем данные для каждого дня
+    renderWeatherDay(weatherToday, forecasts[0], cityName);
+    renderWeatherDay(weatherTomorrow, forecasts[1], cityName);
+    renderWeatherDay(weatherDayAfter, forecasts[2], cityName);
+}
+
+/**
+ * Отображение данных одного дня
+ * @param {HTMLElement} container - Контейнер для дня
+ * @param {Object} forecast - Данные прогноза
+ * @param {string} cityName - Название города
+ */
+function renderWeatherDay(container, forecast, cityName) {
+    if (!container || !forecast) return;
+
+    container.innerHTML = `
+        <div class="weather-day__header">
+            <div class="weather-day__city">${cityName}</div>
+            <div class="weather-day__date">${forecast.dateString}</div>
+        </div>
+        <div class="weather-day__temp">${forecast.tempMax}°</div>
+        <div class="weather-day__description">${forecast.description}</div>
+        <div class="weather-day__details">
+            <div class="weather-day__detail-item">
+                <span>Мин. температура:</span>
+                <span>${forecast.tempMin}°</span>
+            </div>
+            <div class="weather-day__detail-item">
+                <span>Макс. температура:</span>
+                <span>${forecast.tempMax}°</span>
+            </div>
+            <div class="weather-day__detail-item">
+                <span>Скорость ветра:</span>
+                <span>${forecast.windSpeed} км/ч</span>
+            </div>
+        </div>
+    `;
 }
 
 /**
@@ -240,10 +425,8 @@ async function searchCities(query) {
     }
 
     try {
-        // Используем OpenWeatherMap Geocoding API (бесплатный, требует API ключ)
-        // Для демонстрации используем публичный API без ключа или можно использовать другой сервис
-        const API_KEY = 'YOUR_API_KEY'; // Замените на свой API ключ от OpenWeatherMap
-        const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${API_KEY}`;
+        // Используем Open-Meteo Geocoding API (бесплатный, без API ключа)
+        const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=ru&format=json`;
         
         const response = await fetch(url);
         
@@ -253,16 +436,21 @@ async function searchCities(query) {
 
         const data = await response.json();
         
-        return data.map(city => ({
-            name: `${city.name}, ${city.country}`,
+        // Проверяем, есть ли результаты
+        if (!data.results || data.results.length === 0) {
+            return [];
+        }
+        
+        return data.results.map(city => ({
+            name: `${city.name}${city.admin1 ? ', ' + city.admin1 : ''}${city.country ? ', ' + city.country : ''}`,
             cityName: city.name,
-            lat: city.lat,
-            lon: city.lon,
-            country: city.country
+            lat: city.latitude,
+            lon: city.longitude,
+            country: city.country || ''
         }));
     } catch (error) {
         console.error('Ошибка поиска городов:', error);
-        // Для демонстрации возвращаем пустой массив или можно использовать захардкоженный список
+        // В случае ошибки возвращаем захардкоженный список
         return getHardcodedCities(query);
     }
 }
@@ -409,8 +597,9 @@ async function addCity(cityName, lat, lon) {
     // Сохранение в localStorage
     saveCitiesToStorage();
 
-    // Загрузка и отображение погоды
-    // TODO: Реализовать загрузку погоды для города
+    // Автоматически загружаем и отображаем погоду для добавленного города
+    await loadWeatherForCity(cityName, lat, lon);
+    
     console.log('Город добавлен:', { cityName, lat, lon });
 }
 
@@ -425,10 +614,30 @@ function createCityButton(cityName, lat, lon) {
 
     const button = document.createElement('button');
     button.className = 'city-button';
-    button.textContent = cityName;
     button.dataset.cityName = cityName;
     button.dataset.lat = lat;
     button.dataset.lon = lon;
+
+    // Создаем контейнер для содержимого кнопки
+    const buttonContent = document.createElement('span');
+    buttonContent.className = 'city-button__text';
+    buttonContent.textContent = cityName;
+
+    // Создаем кнопку удаления
+    const removeButton = document.createElement('button');
+    removeButton.className = 'city-button__remove';
+    removeButton.innerHTML = '×';
+    removeButton.setAttribute('aria-label', 'Удалить город');
+    
+    // Обработчик клика на кнопку удаления (останавливаем всплытие события)
+    removeButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Предотвращаем срабатывание клика на родительской кнопке
+        removeCity(cityName);
+    });
+
+    // Добавляем содержимое в кнопку
+    button.appendChild(buttonContent);
+    button.appendChild(removeButton);
 
     // Обработчик клика на кнопку города
     button.addEventListener('click', () => {
@@ -440,7 +649,7 @@ function createCityButton(cityName, lat, lon) {
         // Добавляем активный класс текущей кнопке
         button.classList.add('city-button--active');
         
-        // TODO: Загрузить и отобразить погоду для выбранного города
+        // Загрузить и отобразить погоду для выбранного города
         loadWeatherForCity(cityName, lat, lon);
     });
 
@@ -455,8 +664,41 @@ function createCityButton(cityName, lat, lon) {
  * @param {number} lon - Долгота
  */
 async function loadWeatherForCity(cityName, lat, lon) {
-    // TODO: Реализовать загрузку погоды
-    console.log('Загрузка погоды для города:', { cityName, lat, lon });
+    currentSelectedCity = { name: cityName, lat, lon };
+    
+    // Показываем лоадер
+    showLoader(currentLoader);
+    
+    // Скрываем контейнер погоды
+    if (weatherContainer) {
+        weatherContainer.style.display = 'none';
+    }
+    
+    // Скрываем ошибку
+    if (currentError) {
+        currentError.style.display = 'none';
+    }
+
+    try {
+        // Загружаем прогноз на 3 дня
+        const forecasts = await fetchWeatherForecast(lat, lon, cityName);
+        
+        // Отображаем данные
+        renderWeatherCards(forecasts, cityName);
+        
+        console.log('Погода загружена для города:', cityName);
+    } catch (error) {
+        console.error('Ошибка при загрузке погоды:', error);
+        
+        // Скрываем лоадер
+        hideLoader(currentLoader);
+        
+        // Показываем ошибку
+        if (currentError) {
+            currentError.textContent = `Не удалось загрузить прогноз погоды для ${cityName}. Попробуйте обновить данные.`;
+            currentError.style.display = 'block';
+        }
+    }
 }
 
 /**
@@ -464,10 +706,34 @@ async function loadWeatherForCity(cityName, lat, lon) {
  * @param {string} cityName - Название города
  */
 function removeCity(cityName) {
-    // TODO: Удаление города из списка
-    // TODO: Обновление localStorage
-    // TODO: Удаление карточек из DOM
-    console.log('removeCity вызвана:', cityName);
+    // Удаляем город из списка
+    additionalCitiesList = additionalCitiesList.filter(city => 
+        city.name.toLowerCase() !== cityName.toLowerCase()
+    );
+
+    // Обновляем localStorage
+    saveCitiesToStorage();
+
+    // Удаляем кнопку города из DOM
+    const cityButton = document.querySelector(`.city-button[data-city-name="${cityName}"]`);
+    if (cityButton) {
+        cityButton.remove();
+    }
+
+    // Если удаляемый город был активным, очищаем контейнер погоды
+    if (currentSelectedCity && currentSelectedCity.name === cityName) {
+        currentSelectedCity = null;
+        if (weatherContainer) {
+            weatherContainer.style.display = 'none';
+            weatherContainer.innerHTML = '';
+        }
+        // Убираем активный класс со всех кнопок
+        document.querySelectorAll('.city-button').forEach(btn => {
+            btn.classList.remove('city-button--active');
+        });
+    }
+
+    console.log('Город удален:', cityName);
 }
 
 // ============================================
@@ -646,10 +912,56 @@ function handleDocumentClick(event) {
  * Обработка кнопки обновления
  */
 async function handleRefresh() {
-    // TODO: Обновление погоды для текущего местоположения
-    // TODO: Обновление погоды для всех дополнительных городов
-    // TODO: Показ состояния загрузки
-    console.log('handleRefresh вызвана');
+    // Скрываем ошибки
+    if (currentError) {
+        currentError.style.display = 'none';
+    }
+
+    // Если выбран город из списка, обновляем его погоду
+    if (currentSelectedCity) {
+        showLoader(currentLoader);
+        if (weatherContainer) {
+            weatherContainer.style.display = 'none';
+        }
+
+        try {
+            const forecasts = await fetchWeatherForecast(
+                currentSelectedCity.lat, 
+                currentSelectedCity.lon, 
+                currentSelectedCity.name
+            );
+            renderWeatherCards(forecasts, currentSelectedCity.name);
+            console.log('Данные обновлены для:', currentSelectedCity.name);
+        } catch (error) {
+            console.error('Ошибка при обновлении погоды:', error);
+            hideLoader(currentLoader);
+            if (currentError) {
+                currentError.textContent = 'Не удалось обновить данные. Попробуйте позже.';
+                currentError.style.display = 'block';
+            }
+        }
+    } else {
+        // Если нет выбранного города, пытаемся получить геолокацию
+        if (navigator.geolocation) {
+            showLoader(currentLoader);
+            navigator.geolocation.getCurrentPosition(
+                handleGeolocationSuccess,
+                (error) => {
+                    hideLoader(currentLoader);
+                    if (currentError) {
+                        currentError.textContent = 'Не удалось определить местоположение для обновления.';
+                        currentError.style.display = 'block';
+                    }
+                },
+                { timeout: 10000, enableHighAccuracy: true }
+            );
+        } else {
+            if (currentError) {
+                currentError.textContent = 'Геолокация не поддерживается. Выберите город из списка.';
+                currentError.style.display = 'block';
+            }
+        }
+    }
 }
 
 // ============================================
