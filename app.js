@@ -75,7 +75,8 @@ function requestGeolocation() {
 async function handleGeolocationSuccess(position) {
     const { latitude, longitude } = position.coords;
     
-    currentSelectedCity = { name: 'Текущее местоположение', lat: latitude, lon: longitude };
+    const locationName = 'Текущее местоположение';
+    currentSelectedCity = { name: locationName, lat: latitude, lon: longitude };
     
     // Показываем лоадер
     showLoader(currentLoader);
@@ -91,10 +92,26 @@ async function handleGeolocationSuccess(position) {
     }
     
     try {
+        // Создаем кнопку для текущего местоположения (если её еще нет)
+        const existingButton = document.querySelector(`.city-button[data-city-name="${locationName}"]`);
+        if (!existingButton) {
+            createCityButton(locationName, latitude, longitude);
+            // Делаем кнопку активной
+            const newButton = document.querySelector(`.city-button[data-city-name="${locationName}"]`);
+            if (newButton) {
+                document.querySelectorAll('.city-button').forEach(btn => {
+                    btn.classList.remove('city-button--active');
+                });
+                newButton.classList.add('city-button--active');
+            }
+        }
+        
         // Загружаем прогноз для текущего местоположения
-        const forecasts = await fetchWeatherForecast(latitude, longitude, 'Текущее местоположение');
-        renderWeatherCards(forecasts, 'Текущее местоположение');
+        const forecasts = await fetchWeatherForecast(latitude, longitude, locationName);
+        renderWeatherCards(forecasts, locationName);
         currentLocationWeather = forecasts;
+        
+        console.log('Геолокация успешно определена:', { latitude, longitude });
     } catch (error) {
         console.error('Ошибка при загрузке погоды для текущего местоположения:', error);
         hideLoader(currentLoader);
@@ -612,6 +629,12 @@ async function addCity(cityName, lat, lon) {
 function createCityButton(cityName, lat, lon) {
     if (!citiesButtons) return;
 
+    // Проверяем, не существует ли уже такая кнопка
+    const existingButton = document.querySelector(`.city-button[data-city-name="${cityName}"]`);
+    if (existingButton) {
+        return; // Кнопка уже существует
+    }
+
     const button = document.createElement('button');
     button.className = 'city-button';
     button.dataset.cityName = cityName;
@@ -623,21 +646,26 @@ function createCityButton(cityName, lat, lon) {
     buttonContent.className = 'city-button__text';
     buttonContent.textContent = cityName;
 
-    // Создаем кнопку удаления
-    const removeButton = document.createElement('button');
-    removeButton.className = 'city-button__remove';
-    removeButton.innerHTML = '×';
-    removeButton.setAttribute('aria-label', 'Удалить город');
-    
-    // Обработчик клика на кнопку удаления (останавливаем всплытие события)
-    removeButton.addEventListener('click', (e) => {
-        e.stopPropagation(); // Предотвращаем срабатывание клика на родительской кнопке
-        removeCity(cityName);
-    });
-
     // Добавляем содержимое в кнопку
     button.appendChild(buttonContent);
-    button.appendChild(removeButton);
+
+    // Кнопку удаления добавляем только для добавленных пользователем городов
+    // (не для "Текущее местоположение")
+    if (cityName !== 'Текущее местоположение') {
+        // Создаем кнопку удаления
+        const removeButton = document.createElement('button');
+        removeButton.className = 'city-button__remove';
+        removeButton.innerHTML = '×';
+        removeButton.setAttribute('aria-label', 'Удалить город');
+        
+        // Обработчик клика на кнопку удаления (останавливаем всплытие события)
+        removeButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Предотвращаем срабатывание клика на родительской кнопке
+            removeCity(cityName);
+        });
+
+        button.appendChild(removeButton);
+    }
 
     // Обработчик клика на кнопку города
     button.addEventListener('click', () => {
