@@ -53,10 +53,18 @@ function init() {
 /**
  * Запрос геолокации пользователя
  */
-function requestGeolocation() {
+async function requestGeolocation() {
     if (!navigator.geolocation) {
         showGeolocationError('Геолокация не поддерживается вашим браузером');
-        showCitySearchForm();
+        
+        // Если есть сохраненные города, загружаем погоду для первого города
+        if (additionalCitiesList && additionalCitiesList.length > 0) {
+            const firstCity = additionalCitiesList[0];
+            await loadWeatherForCity(firstCity.name, firstCity.lat, firstCity.lon);
+        } else {
+            // Если нет сохраненных городов, показываем форму поиска
+            showCitySearchForm();
+        }
         return;
     }
 
@@ -123,7 +131,7 @@ async function handleGeolocationSuccess(position) {
  * Обработка ошибки геолокации
  * @param {GeolocationPositionError} error - Ошибка геолокации
  */
-function handleGeolocationError(error) {
+async function handleGeolocationError(error) {
     geolocationDenied = true;
     hideLoader(currentLoader);
     
@@ -143,7 +151,15 @@ function handleGeolocationError(error) {
     }
     
     showGeolocationError(errorMessage);
-    showCitySearchForm();
+    
+    // Если есть сохраненные города, загружаем погоду для первого города
+    if (additionalCitiesList && additionalCitiesList.length > 0) {
+        const firstCity = additionalCitiesList[0];
+        await loadWeatherForCity(firstCity.name, firstCity.lat, firstCity.lon);
+    } else {
+        // Если нет сохраненных городов, показываем форму поиска
+        showCitySearchForm();
+    }
 }
 
 /**
@@ -693,6 +709,14 @@ function createCityButton(cityName, lat, lon) {
  */
 async function loadWeatherForCity(cityName, lat, lon) {
     currentSelectedCity = { name: cityName, lat, lon };
+    
+    // Активируем кнопку города
+    document.querySelectorAll('.city-button').forEach(btn => {
+        btn.classList.remove('city-button--active');
+        if (btn.dataset.cityName === cityName) {
+            btn.classList.add('city-button--active');
+        }
+    });
     
     // Показываем лоадер
     showLoader(currentLoader);
